@@ -101,12 +101,16 @@ struct ContentView: View {
                         if timesCountRemaining <= 0{
                             setCountRemaining -= 1
                             timesCountRemaining = timesCount
+                            if setCountRemaining <= 0 { //ここに終了処理を追加
+                                timerReset()
+                                start = false
+                                timer?.invalidate()
+                            }
                         }
                     }
                 }
             }
         }
-        
     }
     func timerReset() {
         start = false
