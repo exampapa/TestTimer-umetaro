@@ -25,6 +25,12 @@ struct ContentView: View {
     @State var readyFlag: Bool = false                   //未使用
     @State var trainingFlag: Bool = false                   //未使用
     @State var intervalFlag: Bool = false                   //未使用
+    
+    @State var status: Int = 1                      //４段階の状態を表す変数を追加
+//    1:ReadyCount中
+//    2:TrainingCount中
+//    3:IntervalCount中
+//    4:終了処理
 
     var body: some View {
 
@@ -67,50 +73,47 @@ struct ContentView: View {
         }
     }
     func timerStart() {
-        guard start else { return }
-//        readyFlag = true
-//        if readyTimeRemaining > 0 {
-//            readyTimeRemaining -= 1
-//        } else if readyTimeRemaining == 0 && trainingTimeRemaining > 0 {
-//
-//            trainingTimeRemaining -= 1
-//        } else if trainingTimeRemaining == 0 && intervalTimeRemaining > 0 {
-//            intervalTimeRemaining -= 1
-//        }
-//        if intervalTimeRemaining == 0 {
-//            if timesCountRemaining > 0 {
-//                timesCountRemaining -= 1
-//            }
-//        }
 
-        //以下を丸ごと書き直しました
-        
-        if readyTimeRemaining > 0{
-            readyTimeRemaining -= 1
-        }else{
-            if setCountRemaining > 0{
-                if timesCountRemaining > 0{
-                    if trainingTimeRemaining > 0{
-                        trainingTimeRemaining -= 1
-                    }else if intervalTimeRemaining > 1{
-                        intervalTimeRemaining -= 1
-                    }else{
-                        timesCountRemaining -= 1
-                        trainingTimeRemaining = trainingTime
-                        intervalTimeRemaining = intervalTime
-                        if timesCountRemaining <= 0{
-                            setCountRemaining -= 1
-                            timesCountRemaining = timesCount
-                            if setCountRemaining <= 0 { //ここに終了処理を追加
-                                timerReset()
-                                start = false
-                                timer?.invalidate()
-                            }
-                        }
-                    }
+    //switch caseでやってみよう
+    
+    switch status{
+
+    case 1: //開始前カウントダウン
+        readyTimeRemaining -= 1
+        if readyTimeRemaining < 1{
+            status = 2
+        }
+    case 2: //トレーニングカウントダウン中
+        trainingTimeRemaining -= 1
+        if trainingTimeRemaining < 1{
+            status = 3
+        }
+    case 3: //インターバルカウントダウン中
+        intervalTimeRemaining -= 1
+        if intervalTimeRemaining < 1{ //インターバルタイマーが0ならトレーニングカウントダウン中に戻る
+            timesCountRemaining -= 1
+            trainingTimeRemaining = trainingTime
+            intervalTimeRemaining = intervalTime
+            status = 2
+            if timesCountRemaining < 1{ //回数が0ならセット数を減らす
+                setCountRemaining -= 1
+                timesCountRemaining = timesCount
+                status = 2
+                if setCountRemaining < 1{ //セット数が0なら終了処理へ
+                    status = 4
                 }
             }
         }
+    case 4: //タイマー終了処理
+            timerReset()
+            start = false
+            timer?.invalidate()
+            status = 1
+    default:
+        break
+    }
+
+        
     }
     func timerReset() {
         start = false
